@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lindavit Кабинет</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
+    button, input { margin-top: 10px; display: block; width: 100%; padding: 8px; }
+    .product { margin: 5px 5px 0 0; display: inline-block; }
+    .entry { margin-top: 20px; background: #f9f9f9; padding: 10px; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <h2>📋 Кабинет провизора Lindavit</h2>
+
+  <input id="name" placeholder="Название аптеки" />
+  <input id="fio" placeholder="ФИО провизора" />
+  <input id="number" placeholder="Номер провизора" />
+
+  <h3>Выберите продукты:</h3>
+  <div id="products">Загрузка...</div>
+
+  <button onclick="submitReport()">📤 Отправить отчет</button>
+  <button onclick="copyReport()">📋 Скопировать список</button>
+
+  <div id="last" class="entry" style="display:none;"></div>
+
+  <script>
+    const selected = {};
+    const productsDiv = document.getElementById("products");
+    const googleCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRAQ2pv78-mQMhNPHQxv4hS7L8_NZ5j-sWZZMAbdy4gjRrtAWwU31nm0-zTrPWqrbwctnDGtwfGXqQ3/pub?output=csv";
+
+    fetch(googleCSV)
+      .then(res => res.text())
+      .then(csv => {
+        const lines = csv.trim().split(\"\\n\").slice(1); // пропускаем заголовок
+        productsDiv.innerHTML = \"\";
+
+        lines.forEach(row => {
+          const name = row.split(\",\")[0].trim();
+          if (name) {
+            const btn = document.createElement(\"button\");
+            btn.textContent = name;
+            btn.className = \"product\";
+            btn.onclick = () => {
+              selected[name] = (selected[name] || 0) + 1;
+              btn.textContent = `${name} (${selected[name]})`;
+            };
+            productsDiv.appendChild(btn);
+          }
+        });
+      })
+      .catch(() => {
+        productsDiv.textContent = \"❌ Не удалось загрузить продукты.\";
+      });
+
+    function submitReport() {
+      const name = document.getElementById(\"name\").value;
+      const fio = document.getElementById(\"fio\").value;
+      const number = document.getElementById(\"number\").value;
+
+      if (!name || !fio || !number || Object.keys(selected).length === 0) {
+        alert(\"Пожалуйста, заполните все поля и выберите хотя бы один продукт.\");
+        return;
+      }
+
+      const products = Object.entries(selected).map(([product, qty]) => ({ product, qty }));
+      fetch(\"https://script.google.com/macros/s/AKfycbyDnSjHHMoFgjfJ4wQc66E8ru9HzGvqqoYuNgncLhOhV8rwYr65shRdHmg-5XApVMoSlg/exec\", {
+        method: \"POST\",
+        mode: \"no-cors\",
+        headers: { \"Content-Type\": \"application/json\" },
+        body: JSON.stringify({ name, fio, number, products })
+      });
+
+      document.getElementById(\"last\").style.display = \"block\";
+      document.getElementById(\"last\").innerHTML = `<strong>${fio}</strong> отправил отчет:<br>` +
+        products.map(p => `${p.product} — ${p.qty} шт.`).join(\"<br>\");
+    }
+
+    function copyReport() {
+      const report = Object.entries(selected)
+        .map(([product, qty]) => `${product} — ${qty} шт.`)
+        .join(\"\\n\");
+      if (!report) {
+        alert(\"Список пуст.\");
+        return;
+      }
+      navigator.clipboard.writeText(report).then(() => {
+        alert(\"✅ Скопировано!\");
+      }).catch(() => alert(\"❌ Не удалось скопировать.\"));
+    }
+  </script>
+</body>
+</html>
