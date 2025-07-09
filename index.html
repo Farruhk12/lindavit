@@ -3,120 +3,100 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Кабинет Провизора Lindavit</title>
+  <title>Lindavit Report</title>
   <style>
     body {
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
       margin: 0;
-      font-family: sans-serif;
-      background-color: #f7f7f7;
+      padding: 16px;
+    }
+    h1 {
+      text-align: center;
+      color: #3C4952;
     }
     .container {
       max-width: 500px;
       margin: auto;
       background: white;
-      border-radius: 16px;
-      padding: 20px;
-      margin-top: 20px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-    h1 {
-      text-align: center;
-      color: #3C4952;
-      font-size: 22px;
+      border-radius: 12px;
+      padding: 16px;
     }
     label {
-      display: block;
-      margin-top: 15px;
-      margin-bottom: 5px;
       font-weight: bold;
-      font-size: 14px;
+      display: block;
+      margin-top: 12px;
     }
     input {
       width: 100%;
       padding: 10px;
-      border-radius: 8px;
+      margin-top: 6px;
+      margin-bottom: 10px;
       border: 1px solid #ccc;
+      border-radius: 6px;
       box-sizing: border-box;
-      font-size: 14px;
     }
     .product-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 12px 0;
-      border-bottom: 1px solid #eee;
-    }
-    .product-name {
-      flex: 1;
-      font-size: 14px;
+      padding: 10px 0;
+      border-bottom: 1px solid #ddd;
     }
     .counter-controls {
       display: flex;
-      align-items: center;
       gap: 8px;
+      align-items: center;
     }
     .counter-controls button {
       background-color: #DF3D21;
       color: white;
       border: none;
-      border-radius: 50%;
-      width: 28px;
-      height: 28px;
+      width: 32px;
+      height: 32px;
       font-size: 18px;
-      line-height: 1;
+      border-radius: 4px;
       cursor: pointer;
     }
-    .counter-controls span {
-      min-width: 20px;
-      text-align: center;
-      display: inline-block;
-    }
-    .submit-btn, .generate-btn {
-      margin-top: 20px;
+    .btn {
       width: 100%;
-      padding: 12px;
-      font-size: 16px;
-      background-color: #DF3D21;
+      background-color: #3C4952;
       color: white;
       border: none;
+      padding: 12px;
+      margin-top: 16px;
+      font-size: 16px;
       border-radius: 8px;
       cursor: pointer;
     }
     .report {
-      background: #f1f1f1;
-      border-radius: 8px;
-      padding: 12px;
       margin-top: 20px;
-      font-size: 14px;
-      line-height: 1.4;
+      background: #f9f9f9;
+      padding: 12px;
+      border-radius: 8px;
     }
   </style>
 </head>
 <body>
+  <h1>Ежедневный отчет по Lindavit</h1>
   <div class="container">
-    <h1>Кабинет Провизора Lindavit</h1>
-    <label>Название аптеки:</label>
-    <input id="pharmacy" type="text" placeholder="Аптека / Филиал" />
+    <label>Название аптеки</label>
+    <input id="pharmacy" placeholder="Введите название аптеки" />
+    <label>ФИО провизора</label>
+    <input id="fio" placeholder="Введите ФИО" />
+    <label>Номер провизора</label>
+    <input id="number" placeholder="Введите номер телефона" />
 
-    <label>ФИО провизора:</label>
-    <input id="fio" type="text" placeholder="ФИО полностью" />
+    <div id="product-list"></div>
 
-    <label>Номер провизора:</label>
-    <input id="number" type="text" placeholder="Номер телефона" />
+    <button class="btn" id="previewBtn">Сформировать отчет</button>
 
-    <label style="margin-top: 20px">Выберите продукты и количество:</label>
-    <div id="products"></div>
-
-    <button class="generate-btn">📄 Сформировать отчёт</button>
-
-    <div id="report-block" style="display: none">
-      <div class="report" id="report"></div>
-      <button class="submit-btn">📤 Отправить отчёт</button>
-    </div>
+    <div class="report" id="report" style="display:none;"></div>
+    <button class="btn" id="submitBtn" style="display:none;background:#DF3D21">Отправить отчет</button>
   </div>
 
   <script>
-    const productList = [
+    const products = [
       "Линдавит Вижн капс №30",
       "Линдавит Д3 капли 15000МЕ/мл 10мл",
       "Линдавит Д3 капс 60000МЕ №8",
@@ -147,59 +127,79 @@
       "Линдацинк тб 20мг №25"
     ];
 
-    const container = document.getElementById("products");
-    const counts = {};
+    const productList = document.getElementById("product-list");
+    const pharmacyInput = document.getElementById("pharmacy");
+    const fioInput = document.getElementById("fio");
+    const numberInput = document.getElementById("number");
+    const reportDiv = document.getElementById("report");
+    const previewBtn = document.getElementById("previewBtn");
+    const submitBtn = document.getElementById("submitBtn");
 
-    productList.forEach(name => {
-      counts[name] = 0;
+    const productQuantities = {};
+
+    products.forEach(product => {
+      productQuantities[product] = 0;
       const row = document.createElement("div");
       row.className = "product-row";
       row.innerHTML = `
-        <div class="product-name">${name}</div>
+        <span class="product-name">${product}</span>
         <div class="counter-controls">
-          <button onclick="changeCount('${name}', -1)">−</button>
-          <span id="count-${name}">0</span>
-          <button onclick="changeCount('${name}', 1)">+</button>
+          <button onclick="changeQty('${product}', -1)">-</button>
+          <span id="qty-${product}">0</span>
+          <button onclick="changeQty('${product}', 1)">+</button>
         </div>
       `;
-      container.appendChild(row);
+      productList.appendChild(row);
     });
 
-    function changeCount(name, delta) {
-      counts[name] = Math.max(0, (counts[name] || 0) + delta);
-      document.getElementById(`count-${name}`).innerText = counts[name];
+    function changeQty(product, delta) {
+      productQuantities[product] = Math.max(0, productQuantities[product] + delta);
+      document.getElementById("qty-" + product).innerText = productQuantities[product];
     }
 
-    document.querySelector(".generate-btn").addEventListener("click", () => {
-      const name = document.getElementById("pharmacy").value.trim();
-      const fio = document.getElementById("fio").value.trim();
-      const number = document.getElementById("number").value.trim();
+    previewBtn.addEventListener("click", () => {
+      const name = pharmacyInput.value.trim();
+      const fio = fioInput.value.trim();
+      const number = numberInput.value.trim();
 
-      const selected = Object.entries(counts)
-        .filter(([_, qty]) => qty > 0)
-        .map(([product, qty]) => `${product} — ${qty} шт.`)
-        .join("<br>");
+      if (!name || !fio || !number) {
+        alert("Пожалуйста, заполните все поля.");
+        return;
+      }
 
-      const reportHTML = `<strong>Аптека:</strong> ${name}<br><strong>ФИО:</strong> ${fio}<br><strong>Телефон:</strong> ${number}<br><br><strong>Продукты:</strong><br>${selected}`;
-      document.getElementById("report").innerHTML = reportHTML;
-      document.getElementById("report-block").style.display = "block";
+      localStorage.setItem("pharmacy", name);
+      localStorage.setItem("fio", fio);
+      localStorage.setItem("number", number);
+
+      let html = `<strong>Аптека:</strong> ${name}<br/><strong>ФИО:</strong> ${fio}<br/><strong>Номер:</strong> ${number}<br/><br/><strong>Продукты:</strong><ul>`;
+      let hasProduct = false;
+      for (let [product, qty] of Object.entries(productQuantities)) {
+        if (qty > 0) {
+          hasProduct = true;
+          html += `<li>${product} — ${qty} шт.</li>`;
+        }
+      }
+      html += `</ul>`;
+      if (!hasProduct) {
+        alert("Пожалуйста, выберите хотя бы один продукт.");
+        return;
+      }
+
+      reportDiv.innerHTML = html;
+      reportDiv.style.display = "block";
+      submitBtn.style.display = "block";
     });
 
-    document.querySelector(".submit-btn").addEventListener("click", () => {
-      const name = document.getElementById("pharmacy").value.trim();
-      const fio = document.getElementById("fio").value.trim();
-      const number = document.getElementById("number").value.trim();
+    submitBtn.addEventListener("click", () => {
+      const name = pharmacyInput.value.trim();
+      const fio = fioInput.value.trim();
+      const number = numberInput.value.trim();
+      const selected = [];
+      for (let [product, qty] of Object.entries(productQuantities)) {
+        if (qty > 0) selected.push({ product, qty });
+      }
 
-      const selectedProducts = Object.entries(counts)
-        .filter(([_, qty]) => qty > 0)
-        .map(([product, qty]) => ({ product, qty }));
-
-      const data = {
-        name,
-        fio,
-        number,
-        products: selectedProducts
-      };
+      const data = { name, fio, number, products: selected };
 
       fetch("https://script.google.com/macros/s/AKfycbyDnSjHHMoFgjfJ4wQc66E8ru9HzGvqqoYuNgncLhOhV8rwYr65shRdHmg-5XApVMoSlg/exec", {
         method: "POST",
@@ -211,6 +211,14 @@
       });
 
       alert("✅ Отчёт отправлен!");
+      submitBtn.style.display = "none";
+    });
+
+    // Автозаполнение из localStorage
+    window.addEventListener("DOMContentLoaded", () => {
+      pharmacyInput.value = localStorage.getItem("pharmacy") || "";
+      fioInput.value = localStorage.getItem("fio") || "";
+      numberInput.value = localStorage.getItem("number") || "";
     });
   </script>
 </body>
