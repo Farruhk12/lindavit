@@ -2,94 +2,198 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Lindavit Кабинет</title>
+  <title>Кабинет Провизора Lindavit</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
-    button, input { margin-top: 10px; display: block; width: 100%; padding: 8px; }
-    .product { margin: 5px 5px 0 0; display: inline-block; }
-    .entry { margin-top: 20px; background: #f9f9f9; padding: 10px; border-radius: 8px; }
+    body {
+      font-family: sans-serif;
+      max-width: 700px;
+      margin: auto;
+      padding: 2rem;
+    }
+    button {
+      margin: 0.25rem;
+      padding: 0.5rem 1rem;
+      border: 1px solid gray;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button.active {
+      background-color: #4ade80;
+      color: white;
+    }
+    input {
+      width: 100%;
+      margin-top: 0.5rem;
+      margin-bottom: 1rem;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 2rem;
+    }
   </style>
 </head>
 <body>
-  <h2>📋 Кабинет провизора Lindavit</h2>
+  <div id="root"></div>
 
-  <input id="name" placeholder="Название аптеки" />
-  <input id="fio" placeholder="ФИО провизора" />
-  <input id="number" placeholder="Номер провизора" />
+  <!-- React & Babel CDN -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
 
-  <h3>Выберите продукты:</h3>
-  <div id="products">Загрузка...</div>
+  <!-- React App -->
+  <script type="text/babel">
+    const { useState } = React;
 
-  <button onclick="submitReport()">📤 Отправить отчет</button>
-  <button onclick="copyReport()">📋 Скопировать список</button>
+    function LindavitDashboard() {
+      const [name, setName] = useState("");
+      const [fio, setFio] = useState("");
+      const [number, setNumber] = useState("");
+      const [selectedProducts, setSelectedProducts] = useState({});
+      const [entries, setEntries] = useState([]);
 
-  <div id="last" class="entry" style="display:none;"></div>
+      const products = [
+        "Линдавит Вижн капс №30",
+        "Линдавит Д3 капли 15000МЕ/мл 10мл",
+        "Линдавит Д3 капс 60000МЕ №8",
+        "Линдавит для Детей тб жеват №60",
+        "Линдавит для Женщин тб №30",
+        "Линдавит для Мужчин капс №30",
+        "Линдавит Е 400мг софтжел капс №30",
+        "Линдавит Железо капс №30",
+        "Линдавит Железо сироп 150мл",
+        "Линдавит кальциум тб шип №20",
+        "Линдавит кардио шип.тб №20",
+        "Линдавит Лактация капс №30",
+        "Линдавит Омега 3 софтжел капс №30",
+        "Линдавит Остео капли 20мл",
+        "Линдавит плюс тб №30",
+        "Линдавит Прегна тб №30",
+        "Линдавит Пренатал капс №30",
+        "Линдавит С тб шип 1000мг №20",
+        "Линдавит С тб шип 500мг №20",
+        "Линдавит селен тб 200мкг/60мг №30",
+        "Линдавит сироп 150мл",
+        "Линдавит слим тб 200мкг №60",
+        "Линдавит Цинк капли 20мг/мл 15мл",
+        "Линдавит Цирон стик саше 14мг/50мг 10мл №10",
+        "Линдакалц актив тб №30",
+        "Линдакалц сироп 150мл",
+        "ЛиндаМишки пастилки жеват №60",
+        "Линдацинк тб 20мг №25"
+      ];
 
-  <script>
-    const selected = {};
-    const productsDiv = document.getElementById("products");
-    const googleCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRAQ2pv78-mQMhNPHQxv4hS7L8_NZ5j-sWZZMAbdy4gjRrtAWwU31nm0-zTrPWqrbwctnDGtwfGXqQ3/pub?output=csv";
+      const handleProductClick = (product) => {
+        setSelectedProducts((prev) => ({
+          ...prev,
+          [product]: prev[product] ? prev[product] + 1 : 1
+        }));
+      };
 
-    fetch(googleCSV)
-      .then(res => res.text())
-      .then(csv => {
-        const lines = csv.trim().split(\"\\n\").slice(1); // пропускаем заголовок
-        productsDiv.innerHTML = \"\";
+      const handleCopy = async () => {
+        try {
+          const report = Object.entries(selectedProducts)
+            .map(([product, qty]) => `${product} — ${qty} шт.`)
+            .join("\n");
+          if (!report) return alert("Список пуст.");
+          await navigator.clipboard.writeText(report);
+          alert("✅ Скопировано!");
+        } catch (err) {
+          alert("❌ Не удалось скопировать.");
+        }
+      };
 
-        lines.forEach(row => {
-          const name = row.split(\",\")[0].trim();
-          if (name) {
-            const btn = document.createElement(\"button\");
-            btn.textContent = name;
-            btn.className = \"product\";
-            btn.onclick = () => {
-              selected[name] = (selected[name] || 0) + 1;
-              btn.textContent = `${name} (${selected[name]})`;
-            };
-            productsDiv.appendChild(btn);
-          }
-        });
-      })
-      .catch(() => {
-        productsDiv.textContent = \"❌ Не удалось загрузить продукты.\";
-      });
+      const handleSubmit = () => {
+        if (name && fio && number && Object.keys(selectedProducts).length > 0) {
+          const productArray = Object.entries(selectedProducts).map(
+            ([product, qty]) => ({ product, qty })
+          );
 
-    function submitReport() {
-      const name = document.getElementById(\"name\").value;
-      const fio = document.getElementById(\"fio\").value;
-      const number = document.getElementById(\"number\").value;
+          // ✅ Отправка данных в Google Таблицу
+          fetch("https://script.google.com/macros/s/AKfycbyDnSjHHMoFgjfJ4wQc66E8ru9HzGvqqoYuNgncLhOhV8rwYr65shRdHmg-5XApVMoSlg/exec", {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name,
+              fio,
+              number,
+              products: productArray
+            })
+          });
 
-      if (!name || !fio || !number || Object.keys(selected).length === 0) {
-        alert(\"Пожалуйста, заполните все поля и выберите хотя бы один продукт.\");
-        return;
-      }
+          const newEntry = {
+            name,
+            fio,
+            number,
+            products: selectedProducts,
+            date: new Date().toLocaleDateString()
+          };
 
-      const products = Object.entries(selected).map(([product, qty]) => ({ product, qty }));
-      fetch(\"https://script.google.com/macros/s/AKfycbyDnSjHHMoFgjfJ4wQc66E8ru9HzGvqqoYuNgncLhOhV8rwYr65shRdHmg-5XApVMoSlg/exec\", {
-        method: \"POST\",
-        mode: \"no-cors\",
-        headers: { \"Content-Type\": \"application/json\" },
-        body: JSON.stringify({ name, fio, number, products })
-      });
+          setEntries([...entries, newEntry]);
+          setSelectedProducts({});
+          alert("✅ Отчёт отправлен!");
+        } else {
+          alert("⚠️ Заполните все поля и выберите продукты.");
+        }
+      };
 
-      document.getElementById(\"last\").style.display = \"block\";
-      document.getElementById(\"last\").innerHTML = `<strong>${fio}</strong> отправил отчет:<br>` +
-        products.map(p => `${p.product} — ${p.qty} шт.`).join(\"<br>\");
+      return (
+        <div>
+          <h1>Кабинет Провизора Lindavit</h1>
+          <div className="card">
+            <label>Название аптеки:</label>
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Аптека / Филиал" />
+
+            <label>ФИО провизора:</label>
+            <input value={fio} onChange={(e) => setFio(e.target.value)} placeholder="ФИО полностью" />
+
+            <label>Номер провизора:</label>
+            <input value={number} onChange={(e) => setNumber(e.target.value)} placeholder="Номер телефона" />
+
+            <label>Выберите продукты:</label>
+            <div>
+              {products.map((product) => (
+                <button
+                  key={product}
+                  onClick={() => handleProductClick(product)}
+                  className={selectedProducts[product] ? "active" : ""}
+                >
+                  {product} {selectedProducts[product] ? `(${selectedProducts[product]})` : ""}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ marginTop: "1rem" }}>
+              <button onClick={handleSubmit}>📤 Отправить</button>
+              <button onClick={handleCopy}>📋 Копировать</button>
+            </div>
+          </div>
+
+          <h2>Последние рекомендации:</h2>
+          <ul>
+            {entries.map((entry, i) => (
+              <li key={i}>
+                <strong>{entry.fio}</strong> ({entry.number}) из <em>{entry.name}</em> рекомендовал:
+                <ul>
+                  {Object.entries(entry.products).map(([p, q], j) => (
+                    <li key={j}>{p} — {q} шт.</li>
+                  ))}
+                </ul>
+                <small>{entry.date}</small>
+              </li>
+            ))}
+          </ul>
+        </div>
+      );
     }
 
-    function copyReport() {
-      const report = Object.entries(selected)
-        .map(([product, qty]) => `${product} — ${qty} шт.`)
-        .join(\"\\n\");
-      if (!report) {
-        alert(\"Список пуст.\");
-        return;
-      }
-      navigator.clipboard.writeText(report).then(() => {
-        alert(\"✅ Скопировано!\");
-      }).catch(() => alert(\"❌ Не удалось скопировать.\"));
-    }
+    ReactDOM.createRoot(document.getElementById("root")).render(<LindavitDashboard />);
   </script>
 </body>
 </html>
