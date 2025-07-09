@@ -11,16 +11,11 @@
       margin: auto;
       padding: 2rem;
     }
-    button {
-      margin: 0.25rem;
-      padding: 0.5rem 1rem;
-      border: 1px solid gray;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    button.active {
-      background-color: #4ade80;
-      color: white;
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 2rem;
     }
     input {
       width: 100%;
@@ -30,11 +25,35 @@
       border: 1px solid #ccc;
       border-radius: 5px;
     }
-    .card {
-      border: 1px solid #e5e7eb;
-      border-radius: 10px;
-      padding: 1rem;
-      margin-bottom: 2rem;
+    .product-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 0.3rem;
+    }
+    .product-name {
+      flex: 1;
+    }
+    .counter {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .counter button {
+      width: 28px;
+      height: 28px;
+      font-weight: bold;
+      font-size: 18px;
+      cursor: pointer;
+      border: none;
+      background-color: #e5e7eb;
+      border-radius: 5px;
+    }
+    .counter span {
+      min-width: 20px;
+      text-align: center;
     }
   </style>
 </head>
@@ -48,12 +67,12 @@
 
   <!-- React App -->
   <script type="text/babel">
-    const { useState } = React;
+    const { useState, useEffect } = React;
 
     function LindavitDashboard() {
-      const [name, setName] = useState("");
-      const [fio, setFio] = useState("");
-      const [number, setNumber] = useState("");
+      const [name, setName] = useState(localStorage.getItem("pharmacyName") || "");
+      const [fio, setFio] = useState(localStorage.getItem("pharmacyFIO") || "");
+      const [number, setNumber] = useState(localStorage.getItem("pharmacyNumber") || "");
       const [selectedProducts, setSelectedProducts] = useState({});
       const [entries, setEntries] = useState([]);
 
@@ -88,33 +107,35 @@
         "Линдацинк тб 20мг №25"
       ];
 
-      const handleProductClick = (product) => {
+      const increaseQty = (product) => {
         setSelectedProducts((prev) => ({
           ...prev,
-          [product]: prev[product] ? prev[product] + 1 : 1
+          [product]: (prev[product] || 0) + 1
         }));
       };
 
-      const handleCopy = async () => {
-        try {
-          const report = Object.entries(selectedProducts)
-            .map(([product, qty]) => `${product} — ${qty} шт.`)
-            .join("\n");
-          if (!report) return alert("Список пуст.");
-          await navigator.clipboard.writeText(report);
-          alert("✅ Скопировано!");
-        } catch (err) {
-          alert("❌ Не удалось скопировать.");
-        }
+      const decreaseQty = (product) => {
+        setSelectedProducts((prev) => {
+          const current = prev[product] || 0;
+          if (current <= 1) {
+            const copy = { ...prev };
+            delete copy[product];
+            return copy;
+          }
+          return { ...prev, [product]: current - 1 };
+        });
       };
 
       const handleSubmit = () => {
         if (name && fio && number && Object.keys(selectedProducts).length > 0) {
+          localStorage.setItem("pharmacyName", name);
+          localStorage.setItem("pharmacyFIO", fio);
+          localStorage.setItem("pharmacyNumber", number);
+
           const productArray = Object.entries(selectedProducts).map(
             ([product, qty]) => ({ product, qty })
           );
 
-          // ✅ Отправка данных в Google Таблицу
           fetch("https://script.google.com/macros/s/AKfycbyDnSjHHMoFgjfJ4wQc66E8ru9HzGvqqoYuNgncLhOhV8rwYr65shRdHmg-5XApVMoSlg/exec", {
             method: "POST",
             mode: "no-cors",
@@ -159,19 +180,19 @@
             <label>Выберите продукты:</label>
             <div>
               {products.map((product) => (
-                <button
-                  key={product}
-                  onClick={() => handleProductClick(product)}
-                  className={selectedProducts[product] ? "active" : ""}
-                >
-                  {product} {selectedProducts[product] ? `(${selectedProducts[product]})` : ""}
-                </button>
+                <div key={product} className="product-row">
+                  <div className="product-name">{product}</div>
+                  <div className="counter">
+                    <button onClick={() => decreaseQty(product)}>-</button>
+                    <span>{selectedProducts[product] || 0}</span>
+                    <button onClick={() => increaseQty(product)}>+</button>
+                  </div>
+                </div>
               ))}
             </div>
 
             <div style={{ marginTop: "1rem" }}>
               <button onClick={handleSubmit}>📤 Отправить</button>
-              <button onClick={handleCopy}>📋 Копировать</button>
             </div>
           </div>
 
