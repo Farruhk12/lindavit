@@ -143,12 +143,22 @@
 
   <script>
     function switchTab(tabId) {
-      document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active"));
-      document.querySelectorAll(".tab-button").forEach(btn => btn.classList.remove("active"));
-      document.getElementById(tabId).classList.add("active");
-      const activeBtn = Array.from(document.querySelectorAll(".tab-button")).find(btn => btn.textContent.includes(tabId === 'reportTab' ? 'Отправить' : 'архив'));
-      if (activeBtn) activeBtn.classList.add("active");
-    }
+  // Удаляем активный класс со всех табов и кнопок
+  document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active"));
+  document.querySelectorAll(".tab-button").forEach(btn => btn.classList.remove("active"));
+
+  // Добавляем активный класс к нужному табу
+  document.getElementById(tabId).classList.add("active");
+
+  // Добавляем активный класс к соответствующей кнопке
+  const tabButtons = document.querySelectorAll(".tab-button");
+  if (tabId === "reportTab") {
+    tabButtons[0].classList.add("active"); // кнопка "Отправить отчет"
+  } else if (tabId === "archiveTab") {
+    tabButtons[1].classList.add("active"); // кнопка "Мои отчеты"
+  }
+}
+
 
     const products = [
       "Линдавит Вижн капс №30", "Линдавит Д3 капли 15000МЕ/мл 10мл", "Линдавит Д3 капс 60000МЕ №8", "Линдавит для Детей тб жеват №60",
