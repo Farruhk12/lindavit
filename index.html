@@ -9,18 +9,44 @@
       font-family: Arial, sans-serif;
       background: #f3f4f6;
       margin: 0;
-      padding: 16px;
+      padding: 0;
     }
     h1 {
       text-align: center;
       color: #3C4952;
     }
-    .container {
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 16px;
+    }
+    .tab-button {
+      flex: 1;
+      max-width: 200px;
+      background-color: #fff;
+      color: #3C4952;
+      border: none;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .tab-button.active {
+      background-color: #3C4952;
+      color: #fff;
+    }
+    .tab-content {
+      display: none;
       max-width: 500px;
       margin: auto;
       background: white;
       border-radius: 12px;
       padding: 16px;
+    }
+    .tab-content.active {
+      display: block;
     }
     label {
       font-weight: bold;
@@ -75,11 +101,27 @@
       padding: 12px;
       border-radius: 8px;
     }
+    .report-block {
+      margin-top: 15px;
+      padding: 15px;
+      background: #f0f0f0;
+      border-radius: 6px;
+    }
+    .product-item {
+      margin-left: 15px;
+      padding-left: 10px;
+      border-left: 2px solid #888;
+    }
   </style>
 </head>
 <body>
   <h1>Ежедневный отчет по Lindavit</h1>
-  <div class="container">
+  <div class="tabs">
+    <button class="tab-button active" onclick="switchTab('reportTab')">Отправить отчет</button>
+    <button class="tab-button" onclick="switchTab('archiveTab')">Посмотреть архив</button>
+  </div>
+
+  <div id="reportTab" class="tab-content active">
     <label>Название аптеки</label>
     <input id="pharmacy" placeholder="Введите название аптеки" />
     <label>ФИО провизора</label>
@@ -88,43 +130,34 @@
     <input id="number" placeholder="Введите номер телефона" />
 
     <div id="product-list"></div>
-
     <button class="btn" id="previewBtn">Сформировать отчет</button>
-
     <div class="report" id="report" style="display:none;"></div>
     <button class="btn" id="submitBtn" style="display:none;background:#DF3D21">Отправить отчет</button>
   </div>
 
+  <div id="archiveTab" class="tab-content">
+    <input type="text" id="phoneInput" placeholder="Введите номер телефона для архива" />
+    <button class="btn" id="archiveBtn">Показать архив</button>
+    <div id="archive"></div>
+  </div>
+
   <script>
+    function switchTab(tabId) {
+      document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active"));
+      document.querySelectorAll(".tab-button").forEach(btn => btn.classList.remove("active"));
+      document.getElementById(tabId).classList.add("active");
+      const activeBtn = Array.from(document.querySelectorAll(".tab-button")).find(btn => btn.textContent.includes(tabId === 'reportTab' ? 'Отправить' : 'архив'));
+      if (activeBtn) activeBtn.classList.add("active");
+    }
+
     const products = [
-      "Линдавит Вижн капс №30",
-      "Линдавит Д3 капли 15000МЕ/мл 10мл",
-      "Линдавит Д3 капс 60000МЕ №8",
-      "Линдавит для Детей тб жеват №60",
-      "Линдавит для Женщин тб №30",
-      "Линдавит для Мужчин капс №30",
-      "Линдавит Е 400мг софтжел капс №30",
-      "Линдавит Железо капс №30",
-      "Линдавит Железо сироп 150мл",
-      "Линдавит кальциум тб шип №20",
-      "Линдавит кардио шип.тб №20",
-      "Линдавит Лактация капс №30",
-      "Линдавит Омега 3 софтжел капс №30",
-      "Линдавит Остео капли 20мл",
-      "Линдавит плюс тб №30",
-      "Линдавит Прегна тб №30",
-      "Линдавит Пренатал капс №30",
-      "Линдавит С тб шип 1000мг №20",
-      "Линдавит С тб шип 500мг №20",
-      "Линдавит селен тб 200мкг/60мг №30",
-      "Линдавит сироп 150мл",
-      "Линдавит слим тб 200мкг №60",
-      "Линдавит Цинк капли 20мг/мл 15мл",
-      "Линдавит Цирон стик саше 14мг/50мг 10мл №10",
-      "Линдакалц актив тб №30",
-      "Линдакалц сироп 150мл",
-      "ЛиндаМишки пастилки жеват №60",
-      "Линдацинк тб 20мг №25"
+      "Линдавит Вижн капс №30", "Линдавит Д3 капли 15000МЕ/мл 10мл", "Линдавит Д3 капс 60000МЕ №8", "Линдавит для Детей тб жеват №60",
+      "Линдавит для Женщин тб №30", "Линдавит для Мужчин капс №30", "Линдавит Е 400мг софтжел капс №30", "Линдавит Железо капс №30",
+      "Линдавит Железо сироп 150мл", "Линдавит кальциум тб шип №20", "Линдавит кардио шип.тб №20", "Линдавит Лактация капс №30",
+      "Линдавит Омега 3 софтжел капс №30", "Линдавит Остео капли 20мл", "Линдавит плюс тб №30", "Линдавит Прегна тб №30",
+      "Линдавит Пренатал капс №30", "Линдавит С тб шип 1000мг №20", "Линдавит С тб шип 500мг №20", "Линдавит селен тб 200мкг/60мг №30",
+      "Линдавит сироп 150мл", "Линдавит слим тб 200мкг №60", "Линдавит Цинк капли 20мг/мл 15мл", "Линдавит Цирон стик саше 14мг/50мг 10мл №10",
+      "Линдакалц актив тб №30", "Линдакалц сироп 150мл", "ЛиндаМишки пастилки жеват №60", "Линдацинк тб 20мг №25"
     ];
 
     const productList = document.getElementById("product-list");
@@ -134,7 +167,7 @@
     const reportDiv = document.getElementById("report");
     const previewBtn = document.getElementById("previewBtn");
     const submitBtn = document.getElementById("submitBtn");
-
+    const archiveBtn = document.getElementById("archiveBtn");
     const productQuantities = {};
 
     products.forEach(product => {
@@ -147,8 +180,7 @@
           <button onclick="changeQty('${product}', -1)">-</button>
           <span id="qty-${product}">0</span>
           <button onclick="changeQty('${product}', 1)">+</button>
-        </div>
-      `;
+        </div>`;
       productList.appendChild(row);
     });
 
@@ -214,11 +246,65 @@
       submitBtn.style.display = "none";
     });
 
-    // Автозаполнение из localStorage
     window.addEventListener("DOMContentLoaded", () => {
       pharmacyInput.value = localStorage.getItem("pharmacy") || "";
       fioInput.value = localStorage.getItem("fio") || "";
       numberInput.value = localStorage.getItem("number") || "";
+    });
+
+    archiveBtn.addEventListener("click", async () => {
+      const phone = document.getElementById("phoneInput").value.trim();
+      const archiveDiv = document.getElementById("archive");
+      archiveDiv.innerHTML = "Загрузка...";
+
+      try {
+        const res = await fetch(`https://script.google.com/macros/s/AKfycbwYxHRnuX_lLngn7EnVin4o_KylnLtdfJs2OvVxbTd2SQCCHCFfSdrroIVi16dXDMuW_w/exec?phone=${phone}`);
+        const rawData = await res.json();
+
+        if (!rawData || rawData.length === 0) {
+          archiveDiv.innerHTML = "Нет отчётов для этого номера.";
+          return;
+        }
+
+        const grouped = {};
+        rawData.forEach(entry => {
+          const key = entry.date;
+          if (!grouped[key]) {
+            grouped[key] = {
+              date: entry.date,
+              pharmacy: entry.pharmacy,
+              fio: entry.fio,
+              products: []
+            };
+          }
+          grouped[key].products.push({ product: entry.product, qty: entry.qty });
+        });
+
+        let html = "<h3>Архив отчётов:</h3>";
+        Object.values(grouped).forEach(item => {
+          html += `
+            <div class="report-block">
+              <p><b>Дата:</b> ${item.date}</p>
+              <p><b>Аптека:</b> ${item.pharmacy}</p>
+              <p><b>ФИО:</b> ${item.fio}</p>
+              <div><b>Продукты:</b></div>`;
+
+          item.products.forEach(p => {
+            html += `
+              <div class="product-item">
+                <p><b>Продукт:</b> ${p.product}</p>
+                <p><b>Кол-во:</b> ${p.qty}</p>
+              </div>`;
+          });
+
+          html += `</div>`;
+        });
+
+        archiveDiv.innerHTML = html;
+
+      } catch (err) {
+        archiveDiv.innerHTML = "Ошибка при загрузке: " + err.message;
+      }
     });
   </script>
 </body>
