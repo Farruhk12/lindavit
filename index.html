@@ -5,107 +5,40 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Lindavit Report</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f3f4f6;
-      margin: 0;
-      padding: 0;
-    }
-    h1 {
-      text-align: center;
-      color: #3C4952;
-    }
-    .tabs {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin: 16px;
-    }
+    body { font-family: Arial, sans-serif; background: #f3f4f6; margin: 0; padding: 0; }
+    h1 { text-align: center; color: #3C4952; }
+    .tabs { display: flex; justify-content: center; gap: 10px; margin: 16px; }
     .tab-button {
-      flex: 1;
-      max-width: 200px;
-      background-color: #fff;
-      color: #3C4952;
-      border: none;
-      padding: 12px;
-      font-size: 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      flex: 1; max-width: 200px; background-color: #fff; color: #3C4952;
+      border: none; padding: 12px; font-size: 16px; border-radius: 8px;
+      cursor: pointer; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
-    .tab-button.active {
-      background-color: #3C4952;
-      color: #fff;
-    }
-    .tab-content {
-      display: none;
-      max-width: 500px;
-      margin: auto;
-      background: white;
-      border-radius: 12px;
-      padding: 16px;
-    }
-    .tab-content.active {
-      display: block;
-    }
-    label {
-      font-weight: bold;
-      display: block;
-      margin-top: 12px;
-    }
+    .tab-button.active { background-color: #3C4952; color: #fff; }
+    .tab-content { display: none; max-width: 500px; margin: auto; background: white; border-radius: 12px; padding: 16px; }
+    .tab-content.active { display: block; }
+    label { font-weight: bold; display: block; margin-top: 12px; }
     input {
-      width: 100%;
-      padding: 10px;
-      margin-top: 6px;
-      margin-bottom: 10px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      box-sizing: border-box;
+      width: 100%; padding: 10px; margin-top: 6px; margin-bottom: 10px;
+      border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;
     }
     .product-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 0;
-      border-bottom: 1px solid #ddd;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 0; border-bottom: 1px solid #ddd;
     }
-    .counter-controls {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
+    .counter-controls { display: flex; gap: 8px; align-items: center; }
     .counter-controls button {
-      background-color: #DF3D21;
-      color: white;
-      border: none;
-      width: 32px;
-      height: 32px;
-      font-size: 18px;
-      border-radius: 4px;
-      cursor: pointer;
+      background-color: #DF3D21; color: white; border: none;
+      width: 32px; height: 32px; font-size: 18px;
+      border-radius: 4px; cursor: pointer;
     }
     .btn {
-      width: 100%;
-      background-color: #3C4952;
-      color: white;
-      border: none;
-      padding: 12px;
-      margin-top: 16px;
-      font-size: 16px;
-      border-radius: 8px;
+      width: 100%; background-color: #3C4952; color: white; border: none;
+      padding: 12px; margin-top: 16px; font-size: 16px; border-radius: 8px;
       cursor: pointer;
     }
-    .report {
-      margin-top: 20px;
-      background: #f9f9f9;
-      padding: 12px;
-      border-radius: 8px;
-    }
+    .report { margin-top: 20px; background: #f9f9f9; padding: 12px; border-radius: 8px; }
     .report-block {
-      margin-top: 15px;
-      padding: 15px;
-      background: #f0f0f0;
-      border-radius: 6px;
+      margin-top: 15px; padding: 15px; background: #f0f0f0; border-radius: 6px;
     }
   </style>
 </head>
@@ -123,6 +56,8 @@
     <input id="fio" placeholder="Введите ФИО" />
     <label>Номер провизора</label>
     <input id="number" placeholder="Введите номер телефона" />
+    <label>Рецепт от кого</label>
+    <input id="recipeFrom" placeholder="ФИО врача или источник рецепта" />
 
     <div id="product-list"></div>
     <button class="btn" id="previewBtn">Сформировать отчет</button>
@@ -163,6 +98,7 @@
     const pharmacyInput = document.getElementById("pharmacy");
     const fioInput = document.getElementById("fio");
     const numberInput = document.getElementById("number");
+    const recipeFromInput = document.getElementById("recipeFrom");
     const reportDiv = document.getElementById("report");
     const previewBtn = document.getElementById("previewBtn");
     const submitBtn = document.getElementById("submitBtn");
@@ -192,6 +128,7 @@
       const name = pharmacyInput.value.trim();
       const fio = fioInput.value.trim();
       const number = numberInput.value.trim();
+      const recipeFrom = recipeFromInput.value.trim();
 
       if (!name || !fio || !number) {
         alert("Пожалуйста, заполните все поля.");
@@ -201,8 +138,9 @@
       localStorage.setItem("pharmacy", name);
       localStorage.setItem("fio", fio);
       localStorage.setItem("number", number);
+      localStorage.setItem("recipeFrom", recipeFrom);
 
-      let html = `<strong>Аптека:</strong> ${name}<br/><strong>ФИО:</strong> ${fio}<br/><strong>Номер:</strong> ${number}<br/><br/><strong>Продукты:</strong><ul>`;
+      let html = `<strong>Аптека:</strong> ${name}<br/><strong>ФИО:</strong> ${fio}<br/><strong>Номер:</strong> ${number}<br/><strong>Рецепт от кого:</strong> ${recipeFrom}<br/><br/><strong>Продукты:</strong><ul>`;
       let hasProduct = false;
       for (let [product, qty] of Object.entries(productQuantities)) {
         if (qty > 0) {
@@ -225,19 +163,19 @@
       const name = pharmacyInput.value.trim();
       const fio = fioInput.value.trim();
       const number = numberInput.value.trim();
+      const recipeFrom = recipeFromInput.value.trim();
+
       const selected = [];
       for (let [product, qty] of Object.entries(productQuantities)) {
         if (qty > 0) selected.push({ product, qty });
       }
 
-      const data = { name, fio, number, products: selected };
+      const data = { name, fio, number, recipeFrom, products: selected };
 
-      fetch("https://script.google.com/macros/s/AKfycbyDnSjHHMoFgjfJ4wQc66E8ru9HzGvqqoYuNgncLhOhV8rwYr65shRdHmg-5XApVMoSlg/exec", {
+      fetch("https://script.google.com/macros/s/AKfycbxj897PnBg-zR-IgoV1SaBT507Ahov1bhO-zctCxFpTlxo_cv9M8-4dimVvxoeVLEcLfw/exec", {
         method: "POST",
         mode: "no-cors",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data)
       });
 
@@ -249,6 +187,7 @@
       pharmacyInput.value = localStorage.getItem("pharmacy") || "";
       fioInput.value = localStorage.getItem("fio") || "";
       numberInput.value = localStorage.getItem("number") || "";
+      recipeFromInput.value = localStorage.getItem("recipeFrom") || "";
     });
 
     archiveBtn.addEventListener("click", async () => {
@@ -257,7 +196,7 @@
       archiveDiv.innerHTML = "Загрузка...";
 
       try {
-        const res = await fetch(`https://script.google.com/macros/s/AKfycbwYxHRnuX_lLngn7EnVin4o_KylnLtdfJs2OvVxbTd2SQCCHCFfSdrroIVi16dXDMuW_w/exec?phone=${phone}`);
+        const res = await fetch(`https://script.google.com/macros/s/AKfycbxj897PnBg-zR-IgoV1SaBT507Ahov1bhO-zctCxFpTlxo_cv9M8-4dimVvxoeVLEcLfw/exec?phone=${phone}`);
         const rawData = await res.json();
 
         if (!rawData || rawData.length === 0) {
@@ -273,6 +212,7 @@
               date: entry.date,
               pharmacy: entry.pharmacy,
               fio: entry.fio,
+              recipeFrom: entry.recipeFrom,
               products: []
             };
           }
@@ -291,6 +231,7 @@
               <p><b>Дата:</b> ${formattedDate}</p>
               <p><b>Аптека:</b> ${item.pharmacy}</p>
               <p><b>ФИО:</b> ${item.fio}</p>
+              <p><b>Рецепт от кого:</b> ${item.recipeFrom || "—"}</p>
               <p><b>Продукты:</b></p>`;
 
           item.products.forEach(p => {
