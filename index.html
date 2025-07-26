@@ -172,7 +172,7 @@
 
       const data = { name, fio, number, recipeFrom, products: selected };
 
-      fetch("https://script.google.com/macros/s/AKfycbxj897PnBg-zR-IgoV1SaBT507Ahov1bhO-zctCxFpTlxo_cv9M8-4dimVvxoeVLEcLfw/exec", {
+      fetch("https://script.google.com/macros/s/AKfycbzYcOZHTw-HNfAgeZD6BmmtE4mVUsG-dOJiOeIvO_MFO-Cl9lBZPZ48zrQdSuIKVfgg-g/exec", {
         method: "POST",
         mode: "no-cors",
         headers: { "Content-Type": "application/json" },
@@ -191,62 +191,71 @@
     });
 
     archiveBtn.addEventListener("click", async () => {
-      const phone = document.getElementById("phoneInput").value.trim();
-      const archiveDiv = document.getElementById("archive");
-      archiveDiv.innerHTML = "Загрузка...";
+  const phone = document.getElementById("phoneInput").value.trim();
+  const archiveDiv = document.getElementById("archive");
+  archiveDiv.innerHTML = "Загрузка...";
 
-      try {
-        const res = await fetch(`https://script.google.com/macros/s/AKfycbxj897PnBg-zR-IgoV1SaBT507Ahov1bhO-zctCxFpTlxo_cv9M8-4dimVvxoeVLEcLfw/exec?phone=${phone}`);
-        const rawData = await res.json();
+  try {
+    const res = await fetch(`https://script.google.com/macros/s/AKfycbzYcOZHTw-HNfAgeZD6BmmtE4mVUsG-dOJiOeIvO_MFO-Cl9lBZPZ48zrQdSuIKVfgg-g/exec?phone=${phone}`);
+    const rawData = await res.json();
 
-        if (!rawData || rawData.length === 0) {
-          archiveDiv.innerHTML = "Нет отчётов для этого номера.";
-          return;
-        }
+    if (!rawData || rawData.length === 0) {
+      archiveDiv.innerHTML = "Нет отчётов для этого номера.";
+      return;
+    }
 
-        const grouped = {};
-        rawData.forEach(entry => {
-          const key = entry.date;
-          if (!grouped[key]) {
-            grouped[key] = {
-              date: entry.date,
-              pharmacy: entry.pharmacy,
-              fio: entry.fio,
-              recipeFrom: entry.recipeFrom,
-              products: []
-            };
-          }
-          grouped[key].products.push({ product: entry.product, qty: entry.qty });
-        });
+    const grouped = {};
+    let totalBonus = 0;
 
-        let html = "<h3>Архив отчётов:</h3>";
-        Object.values(grouped).forEach(item => {
-          const formattedDate = new Date(item.date).toLocaleString("ru-RU", {
-            year: "numeric", month: "2-digit", day: "2-digit",
-            hour: "2-digit", minute: "2-digit"
-          });
-
-          html += `
-            <div class="report-block">
-              <p><b>Дата:</b> ${formattedDate}</p>
-              <p><b>Аптека:</b> ${item.pharmacy}</p>
-              <p><b>ФИО:</b> ${item.fio}</p>
-              <p><b>Рецепт от кого:</b> ${item.recipeFrom || "—"}</p>
-              <p><b>Продукты:</b></p>`;
-
-          item.products.forEach(p => {
-            html += `<p>${p.product}: ${p.qty}</p>`;
-          });
-
-          html += `</div>`;
-        });
-
-        archiveDiv.innerHTML = html;
-
-      } catch (err) {
-        archiveDiv.innerHTML = "Ошибка при загрузке: " + err.message;
+    rawData.forEach(entry => {
+      const key = entry.date;
+      if (!grouped[key]) {
+        grouped[key] = {
+          date: entry.date,
+          pharmacy: entry.pharmacy,
+          fio: entry.fio,
+          recipeFrom: entry.recipeFrom,
+          products: []
+        };
       }
+
+      grouped[key].products.push({
+        product: entry.product,
+        qty: entry.qty,
+        bonus: Number(entry.bonus || 0)
+      });
+
+      totalBonus += Number(entry.bonus || 0);
     });
+
+    let html = `<h3>Архив отчётов:</h3><p><b>Сумма бонусов:</b> ${totalBonus}</p>`;
+    Object.values(grouped).forEach(item => {
+      const formattedDate = new Date(item.date).toLocaleString("ru-RU", {
+        year: "numeric", month: "2-digit", day: "2-digit",
+        hour: "2-digit", minute: "2-digit"
+      });
+
+      html += `
+        <div class="report-block">
+          <p><b>Дата:</b> ${formattedDate}</p>
+          <p><b>Аптека:</b> ${item.pharmacy}</p>
+          <p><b>ФИО:</b> ${item.fio}</p>
+          <p><b>Рецепт от кого:</b> ${item.recipeFrom || "—"}</p>
+          <p><b>Продукты:</b></p>`;
+
+      item.products.forEach(p => {
+        html += `<p>${p.product}: ${p.qty} шт. — <b>${p.bonus} сомонӣ</b></p>`;
+      });
+
+      html += `</div>`;
+    });
+
+    archiveDiv.innerHTML = html;
+
+  } catch (err) {
+    archiveDiv.innerHTML = "Ошибка при загрузке: " + err.message;
+  }
+});
   </script>
 </body>
 </html>
